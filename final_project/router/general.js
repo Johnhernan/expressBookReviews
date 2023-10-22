@@ -26,14 +26,15 @@ public_users.post("/register", (req,res) => {
 public_users.get('/',async function (req, res) {
   //Write your code here
 
-  axios.get().then(response => {
-    if(!books) throw {message: 'no books found'}
-    return res.status(200).json(books);
-  })
-  .catch(err => {
-    return res.status(200).json(err);
-  })
-
+  axios.get('https://raw.githubusercontent.com/Johnhernan/expressBookReviews/main/final_project/router/booksdb.json')
+    .then(response => {
+      const bookResponse = response.data;
+      if(!bookResponse) throw {message: "No books found."}
+      return res.status(200).json(bookResponse);
+    })
+    .catch(err => {
+      return res.status(200).json(err);
+    })
 });
 
 // Get book details based on ISBN
@@ -51,26 +52,28 @@ public_users.get('/isbn/:isbn',function (req, res) {
 public_users.get('/author/:author',function (req, res) {
   //Write your code here
   let author = req.params.author;
-  new Promise((resolve, reject) => {
-      if (typeof author === 'string') {
-        author = author
-            .replaceAll('%20', ' ')
-            .replaceAll('+', ' ')
-      }else throw {message: "Invalid params"};
-      let matches = [];
-      for (const [key, value] of Object.entries(books)) {
-        if(value.author === author) matches.push(value);
-      }
-      if (matches.length > 0) {
-        resolve(matches);
-      } else throw {message: "No books matches this author"};
-    })
-    .then(response => {
-      return res.status(200).json(response);
-    })
-    .catch(err => {
-      return res.status(200).json(err);
-    });
+
+  if (typeof author === 'string') {
+    author = author
+        .replaceAll('%20', ' ')
+        .replaceAll('+', ' ')
+  }else return res.status(400).json({message: "Invalid params"});
+
+  axios.get('https://raw.githubusercontent.com/Johnhernan/expressBookReviews/main/final_project/router/booksdb.json')
+      .then(response=> {
+        let matches = [];
+        for (const [key, value] of Object.entries(books)) {
+          if(value.author === author) matches.push(value);
+        }
+        if (matches.length > 0) {
+          return res.status(200).json(response);
+        }
+        return res.status(200).json({message: 'No books found'});
+
+      })
+      .catch((err) => {
+        return res.json(err)
+      })
 });
 
 // Get all books based on title
@@ -78,37 +81,46 @@ public_users.get('/title/:title',function (req, res) {
   //Write your code here
   let title = req.params.title;
 
-  new Promise((resolve, reject) => {
-    if (typeof title === 'string') {
-      title = title
-          .replaceAll('%20', ' ')
-          .replaceAll('+', ' ')
-    }else throw {message: "Invalid params"};
-    let matches = [];
-    for (const [key, value] of Object.entries(books)) {
-      if(value.title === title) matches.push(value);
-    }
-    if (matches.length > 0) {
-      resolve(matches);
-    } else throw {message: "No books matches this title"};
-  })
-      .then(response => {
-        return res.status(200).json(response);
+  if (typeof title === 'string') {
+    title = title
+        .replaceAll('%20', ' ')
+        .replaceAll('+', ' ')
+  }else return res.status(400).json({message: "Invalid params"});
+
+  axios.get('https://raw.githubusercontent.com/Johnhernan/expressBookReviews/main/final_project/router/booksdb.json')
+      .then(response=> {
+        let matches = [];
+        for (const [key, value] of Object.entries(books)) {
+          if(value.title === title) matches.push(value);
+        }
+        if (matches.length > 0) {
+          return res.status(200).json(response);
+        }
+        return res.status(200).json({message: 'No books found'});
+
       })
-      .catch(err => {
-        return res.status(200).json(err);
-      });
+      .catch((err) => {
+        return res.json(err)
+      })
 });
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
   //Write your code here
   let isbn = req.params.isbn;
-  let match = books[isbn];
 
-  if (!match) return res.status(200).json({message: "No reviews"});
+  axios.get('https://raw.githubusercontent.com/Johnhernan/expressBookReviews/main/final_project/router/booksdb.json')
+      .then(response=> {
+        let match = response[isbn];
 
-  return res.status(200).json(match.reviews);
+        if (!match) return res.status(200).json({message: "No reviews"});
+
+        return res.status(200).json(match.reviews);
+      })
+      .catch((err) => {
+        return res.json(err)
+      })
+
 });
 
 module.exports.general = public_users;
